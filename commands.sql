@@ -1,40 +1,39 @@
-DELIMITER //
-CREATE DEFINER=`root`@`localhost` PROCEDURE `change_password`(
-INPUT_URL TEXT,
- NEW_PASSWORD VARCHAR(30)
-)
-BEGIN
-UPDATE password SET PW = aes_encrypt(NEW_PASSWORD,'summer') where URL = INPUT_URL;
-END//
-DELIMITER ;
 
-DELIMITER //
-CREATE DEFINER=`root`@`localhost` PROCEDURE `change_URL`(
-INPUT_PW varbinary(200),
-INPUT_URL TEXT
-)
-BEGIN
-UPDATE password SET URL = INPUT_URL where PW = aes_encrypt('wilson20','summer'); 
-END//
-DELIMITER ;
 
-DELIMITER //
-CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_password`(
-INPUT_URL TEXT,
-INPUT_FIRST varchar(15)
-)
-BEGIN
- DELETE FROM password where URL = INPUT_URL AND First_Name = INPUT_FIRST;
-END//
-DELIMITER ;
+SET block_encryption_mode = 'aes-256-cbc';
+SET @key_str = UNHEX(SHA2('my secret passphrase', 512));
+SET @init_vector = RANDOM_BYTES(16);
 
-DELIMITER //
-CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_URL`(
-INPUT_URL TEXT)
-BEGIN
-delete from password where URL = INPUT_URL;
-END//
-DELIMITER ;
+/*
+#############Instruction###############
+
+#create a new entry
+- if you do not want to add comment, you must include null
+call Insert_info(First_Name, Last name, username, email address, password, website, url, comment);
+
+#get the password associated with the URL of one of your 10 entries
+call retrive_pw(URL);
+
+#get all the password-related data, including the password, associated with URLs that have 'https' in two of your 10 entries
+call retrive_info();
+
+#Change a url associated with one of the passwords in your 10 entries
+call change_url(INPUT_PW ,
+INPUT_URL);
+
+#change any password
+call change_password(INPUT_URL,
+ NEW_PASSWORD);
+
+#remove a URL
+call delete_URL(
+INPUT_URL)
+
+#remove a password
+call delete_PW(
+INPUT_PW)
+
+*/
 
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Insert_info`(
@@ -45,10 +44,17 @@ EMAIL_ADDRESS varchar(30),
 PASS_WORD varchar(30),
 WEBSITE varchar(30),
 URL text,
-COMMENT  text
+COMMENT text
 )
 BEGIN
-INSERT INTO password values(FIRST_NAME, LAST_NAME, USERNAME,EMAIL_ADDRESS, aes_encrypt(PASS_WORD,'summer'), now() ,WEBSITE,URL,COMMENT);
+
+if COMMENT = '' then
+
+	set COMMENT = null;
+end if;
+
+INSERT INTO password values(FIRST_NAME, LAST_NAME, USERNAME,EMAIL_ADDRESS, aes_encrypt(PASS_WORD,@key_str, @init_vector), now() ,WEBSITE,URL,COMMENT);
+
 END//
 DELIMITER ;
 
@@ -56,15 +62,53 @@ DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retrive_pw`(
 INPUT_URL TEXT)
 BEGIN
-select cast( aes_decrypt(PW,'summer') as char) PW from password where First_Name = INPUT_URL;
+select cast( aes_decrypt(PW,@key_str,@init_vector) as char) PW from password where URL = INPUT_URL;
 END//
 DELIMITER ;
 
 DELIMITER //
-CREATE DEFINER=`root`@`localhost` PROCEDURE `retrive_URL`(
-INPUT_URL TEXT)
+CREATE DEFINER=`root`@`localhost` PROCEDURE `change_URL`(
+INPUT_PW VARCHAR(30),
+INPUT_URL TEXT
+)
 BEGIN
-select cast( aes_decrypt(PW,'summer') as char) PW from password where First_Name = INPUT_URL;
+UPDATE password SET URL = INPUT_URL where PW = aes_encrypt(INPUT_PW,@key_str, @init_vector); 
 END//
 DELIMITER ;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `change_password`(
+INPUT_URL TEXT,
+ NEW_PASSWORD VARCHAR(30)
+)
+BEGIN
+UPDATE password SET PW = aes_encrypt(NEW_PASSWORD,@key_str, @init_vector) where URL = INPUT_URL;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_URL`(
+INPUT_URL TEXT)
+BEGIN
+UPDATE password SET URL = null WHERE URL = INPUT_URL;
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_PW`(
+INPUT_PW varchar(30))
+BEGIN
+UPDATE password SET PW = null WHERE PW = aes_encrypt(INPUT_PW,@key_str, @init_vector);
+END//
+DELIMITER ;
+
+DELIMITER //
+CREATE DEFINER=`root`@`localhost` PROCEDURE `retrive_info`()
+
+BEGIN
+SELECT First_Name, Last_Name, UserName, Email_Address, cast( aes_decrypt(PW,@key_str, @init_vector) as char) PW, Created_At, website, URL, Comment from password;
+END//
+DELIMITER ;
+
+
 
