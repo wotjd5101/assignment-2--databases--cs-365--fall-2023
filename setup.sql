@@ -27,6 +27,7 @@ primary key (First_Name, UserName)
 
 
 
+source command.sql
 
 insert into password values ('Noah', 'Wilson', 'nwilson','nwilson@gmail.com', aes_encrypt('wilson20',@key_str, @init_vector),now(),'Yahoo!','https://www.Yahoo.com','Test Comment');
 insert into password values('Oliver', 'Johnson', 'ojohnson','ojohnson@gmail.com',aes_encrypt('ojohnson12',@key_str, @init_vector),now(),'Youtube','https://www.youtube.com/',null);
