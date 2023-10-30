@@ -1,4 +1,4 @@
-/* Please source command.sql*/
+
 
 SET block_encryption_mode = 'aes-256-cbc';
 SET @key_str = UNHEX(SHA2('my secret passphrase', 512));
