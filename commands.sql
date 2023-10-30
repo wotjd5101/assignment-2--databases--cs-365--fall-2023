@@ -1,9 +1,4 @@
 
-
-SET block_encryption_mode = 'aes-256-cbc';
-SET @key_str = UNHEX(SHA2('my secret passphrase', 512));
-SET @init_vector = RANDOM_BYTES(16);
-
 /*
 #############Instruction###############
 
@@ -35,6 +30,14 @@ INPUT_PW)
 
 */
 
+DROP PROCEDURE IF EXISTS Insert_info;
+DROP PROCEDURE IF EXISTS retrive_info;
+DROP PROCEDURE IF EXISTS retrive_pw;
+DROP PROCEDURE IF EXISTS change_password;
+DROP PROCEDURE IF EXISTS change_URL;
+DROP PROCEDURE IF EXISTS delete_PW;
+DROP PROCEDURE IF EXISTS delete_URL;
+
 DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `Insert_info`(
 FIRST_NAME varchar(15),
@@ -62,8 +65,10 @@ DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retrive_pw`(
 INPUT_URL TEXT)
 BEGIN
-select cast( aes_decrypt(PW,@key_str,@init_vector) as char) PW from password where URL = INPUT_URL;
-END//
+	select cast( aes_decrypt(PW,@key_str,@init_vector) as char) PW 
+	from password 
+	where URL = INPUT_URL;
+	END//
 DELIMITER ;
 
 DELIMITER //
@@ -90,7 +95,8 @@ DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_URL`(
 INPUT_URL TEXT)
 BEGIN
-UPDATE password SET URL = null WHERE URL = INPUT_URL;
+/*UPDATE password SET URL = null WHERE URL = INPUT_URL;*/
+	delete from password where URL = INPUT_URL;
 END//
 DELIMITER ;
 
@@ -98,7 +104,7 @@ DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `delete_PW`(
 INPUT_PW varchar(30))
 BEGIN
-UPDATE password SET PW = null WHERE PW = aes_encrypt(INPUT_PW,@key_str, @init_vector);
+	delete from password where PW = aes_encrypt(INPUT_PW,@key_str, @init_vector);
 END//
 DELIMITER ;
 
@@ -106,9 +112,24 @@ DELIMITER //
 CREATE DEFINER=`root`@`localhost` PROCEDURE `retrive_info`()
 
 BEGIN
-SELECT First_Name, Last_Name, UserName, Email_Address, cast( aes_decrypt(PW,@key_str, @init_vector) as char) PW, Created_At, website, URL, Comment from password;
+
+		SELECT 
+		
+		First_Name, 
+		Last_Name, 
+		UserName, 
+		Email_Address, 
+		cast( aes_decrypt(PW,@key_str, @init_vector) as char) as 'PW', 
+		Created_At, 
+		website, 
+		URL, 
+		Comment 
+		
+		FROM password;
 END//
 DELIMITER ;
+
+
 
 
 

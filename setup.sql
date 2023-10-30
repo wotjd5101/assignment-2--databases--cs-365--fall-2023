@@ -1,8 +1,9 @@
-
+/*Please download and save command.sql in the same directory with setup.sql*/
 
 SET block_encryption_mode = 'aes-256-cbc';
-SET @key_str = UNHEX(SHA2('my secret passphrase', 512));
+SET @key_str = UNHEX(SHA2('summer', 512));
 SET @init_vector = RANDOM_BYTES(16);
+
 
 DROP DATABASE IF EXISTS passwords;
 
@@ -16,18 +17,18 @@ First_Name varchar(15) not null,
 Last_Name varchar(15) not null,
 UserName varchar(15) not null,
 Email_Address varchar(30) not null,
-PW varbinary(200) default null,
+PW varbinary(512) not null,
 Created_At timestamp not null default  current_timestamp,
 website varchar(30) not null null,
 URL text default null,
 Comment text default null,
 
-primary key (First_Name, UserName)
+primary key (First_Name, UserName, Email_Address)
 );
 
 
 
-source command.sql
+
 
 insert into password values ('Noah', 'Wilson', 'nwilson','nwilson@gmail.com', aes_encrypt('wilson20',@key_str, @init_vector),now(),'Yahoo!','https://www.Yahoo.com','Test Comment');
 insert into password values('Oliver', 'Johnson', 'ojohnson','ojohnson@gmail.com',aes_encrypt('ojohnson12',@key_str, @init_vector),now(),'Youtube','https://www.youtube.com/',null);
@@ -39,6 +40,11 @@ insert into password values('Lucas', 'Garcia', 'lgarcia','lgarcia@gmail.com',aes
 insert into password values('Benjamin', 'Taylor', 'btaylor','btaylor@gmail.com',aes_encrypt('btaylor65',@key_str, @init_vector),now(),'ALLSAINTS','https://www.allsaints.com/men.html',null);
 insert into password values('Emma', 'Martinez', 'emartinez','emartinez@gmail.com',aes_encrypt('emartinez328',@key_str, @init_vector),now(),'UNIQLO','https://www.uniqlo.com/us/en/',null);
 insert into password values('Josh', 'Anderson', 'Janderson','Janderson@gmail.com',aes_encrypt('Janderson940',@key_str, @init_vector),now(),'MUJI','https://www.muji.us/',null);
+
+select aes_decrypt(PW,@key_str, @init_vector) as PW from password;
+select cast(aes_decrypt(PW,@key_str, @init_vector) as char) as PW from password;
+
+source command.sql;
 
 
 
